@@ -1,0 +1,46 @@
+# =================================================================
+# --- General ---
+# =================================================================
+# Archivos de Log
+*.log
+npm-debug.log*
+yarn-error.log
+pnpm-debug.log
+
+# Archivos de configuración de IDEs
+.idea/
+.vscode/
+*.iml
+
+# Archivos de Sistema Operativo
+.DS_Store
+Thumbs.db
+
+
+# =================================================================
+# --- Server (Node.js / Express / Prisma) ---
+# =================================================================
+# Dependencias
+server/node_modules/
+
+# Archivos de build (TypeScript compilado)
+server/dist/
+
+# Archivo de entorno (¡MUY IMPORTANTE!)
+# Contiene los secretos de la base de datos
+server/.env
+
+
+# =================================================================
+# --- Client (Next.js) ---
+# =================================================================
+# Dependencias
+client/node_modules/
+
+# Archivos de build y caché de Next.js
+client/.next/
+client/out/
+
+# Archivos de entorno del cliente
+client/.env.local
+client/.env

@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ================= ENUMS =================
+
+enum EstadoEvento {
+  pendiente
+  completada
+  cancelada
+  noAsistio
+}
+
+enum Genero {
+  masculino
+  femenino
+  otro
+}
+
+// ================= ENTIDADES =================
+
+model Paciente {
+  id_pac         Int      @id @default(autoincrement())
+  nombres_pac    String   @db.VarChar(100)
+  apellidos_pac  String   @db.VarChar(100)
+  cedula_pac     String   @unique @db.VarChar(10)
+  genero_pac     Genero
+  telefono_pac   String?  @db.VarChar(10)
+  direccion_pac  String?  @db.VarChar(255)
+  email_pac      String?  @unique @db.VarChar(150)
+  fechaNac_pac   DateTime? @db.Date
+  
+  // Relaciones
+  consultas     Consulta[]
+  citas         Cita[]
+
+  @@map("pacientes")
+}
+
+model Podologa {
+  id_pod         Int      @id @default(autoincrement())
+  nombres_pod    String   @db.VarChar(100)
+  apellidos_pod  String   @db.VarChar(100)
+  cedula_pod     String   @unique @db.VarChar(10)
+  genero_pod     Genero
+  telefono_pod   String?  @db.VarChar(10)
+  direccion_pod  String?  @db.VarChar(255)
+  email_pod      String?  @unique @db.VarChar(150)
+  fechaNac_pod   DateTime? @db.Date
+
+  // Relaciones
+  consultas     Consulta[]
+  citas         Cita[]
+  egresos       Egresos[]
+
+  @@map("podologas")
+}
+
+model Tratamiento {
+  id_tra          Int     @id @default(autoincrement())
+  nombres_tra     String
+  precioBase_tra  Float
+
+  // Relaciones
+  consultasRecomendadas Consulta[]
+  citasRealizadas       Cita[]
+
+  @@map("tratamientos")
+}
+
+model Consulta {
+  id_con              Int          @id @default(autoincrement())
+  id_pac              Int
+  id_pod              Int
+  fechaHora_con        DateTime     @db.DateTime(0)
+  horaInicio_con       DateTime?    @db.Time
+  horaFin_con          DateTime?    @db.Time
+  motivoConsulta_con   String?      @db.Text
+  diagnostico_con      String?      @db.Text
+  notasAdicionales_con String?     @db.Text
+  estado_con          EstadoEvento @default(pendiente)
+  pagado_con          Boolean      @default(false)
+  cantidadPagada_con   Decimal      @default(0.00) @db.Decimal(10, 2)
+  
+  // Recomendación
+  id_tra_recomendado  Int?
+  precioSugerido_con   Decimal?     @db.Decimal(10, 2)
+
+  // Relaciones
+  paciente            Paciente     @relation(fields: [id_pac], references: [id_pac])
+  podologa            Podologa     @relation(fields: [id_pod], references: [id_pod])
+  tratamientoSugerido Tratamiento? @relation(fields: [id_tra_recomendado], references: [id_tra])
+  
+  citasOriginadas     Cita[]
+
+  @@map("consultas")
+}
+
+model Cita {
+  id_cit              Int          @id @default(autoincrement())
+  id_pac              Int
+  id_con_origen       Int?         // Puede venir de una consulta o ser directa
+  id_pod              Int
+  id_tra              Int
+  fechaHora_cit        DateTime     @db.DateTime(0)
+  horaInicio_cit       DateTime?    @db.Time
+  horaFin_cit          DateTime?    @db.Time
+  notasAdicionales_cit String?     @db.Text
+  estado_cit          EstadoEvento @default(pendiente)
+  precioAcordado_cit   Decimal      @db.Decimal(10, 2)
+  pagado_cit           Boolean      @default(false)
+  cantidadPagada_cit   Decimal      @default(0.00) @db.Decimal(10, 2)
+
+  // Relaciones
+  paciente            Paciente     @relation(fields: [id_pac], references: [id_pac])
+  consultaOrigen      Consulta?    @relation(fields: [id_con_origen], references: [id_con])
+  podologa            Podologa     @relation(fields: [id_pod], references: [id_pod])
+  tratamiento         Tratamiento  @relation(fields: [id_tra], references: [id_tra])
+
+  @@map("citas")
+}
+
+model Egresos {
+  id_egr     Int      @id @default(autoincrement())
+  monto_egr      Decimal  @db.Decimal(10, 2)
+  fecha_egr      DateTime @db.DateTime(0)
+  motivo_egr     String?  @db.VarChar(255)
+  id_pod     Int
+
+  // Relaciones
+  podologa   Podologa @relation(fields: [id_pod], references: [id_pod])
+
+  @@map("egresos")
+}
