@@ -136,8 +136,14 @@ export default function EditarPacientePage({ params }: { params: Promise<{ id: s
           </div>
           
           <div className="sm:col-span-6">
-            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <label className="block text-sm font-medium text-gray-700">Correo Electrónico</label>
             <input type="email" name="email_pac" value={formData.email_pac || ''} onChange={handleChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-oxi-blue focus:ring-oxi-blue sm:text-sm border p-2 text-gray-900" />
+          </div>
+
+          <div className="sm:col-span-6">
+            <label className="block text-sm font-medium text-gray-700">Dirección</label>
+            <input type="text" name="direccion_pac" value={formData.direccion_pac || ''} onChange={handleChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-oxi-blue focus:ring-oxi-blue sm:text-sm border p-2 text-gray-900" />
           </div>
         </div>

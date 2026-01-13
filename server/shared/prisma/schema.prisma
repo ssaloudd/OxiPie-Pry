@@ -107,7 +107,7 @@ model Cita {
   id_pac              Int
   id_con_origen       Int?         // Puede venir de una consulta o ser directa
   id_pod              Int?
-  id_tra              Int
+  id_tra              Int?
   fechaHora_cit        DateTime     @db.DateTime(0)
   horaInicio_cit       DateTime?    @db.Time
   horaFin_cit          DateTime?    @db.Time
@@ -121,7 +121,7 @@ model Cita {
   paciente            Paciente     @relation(fields: [id_pac], references: [id_pac])
   consultaOrigen      Consulta?    @relation(fields: [id_con_origen], references: [id_con])
   podologa            Podologa?     @relation(fields: [id_pod], references: [id_pod])
-  tratamiento         Tratamiento  @relation(fields: [id_tra], references: [id_tra])
+  tratamiento         Tratamiento?  @relation(fields: [id_tra], references: [id_tra])
 
   @@map("citas")
 }

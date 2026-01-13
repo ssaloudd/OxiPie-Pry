@@ -41,6 +41,12 @@ export default function RootLayout({
                   <Link href="/pacientes" className="border-transparent text-gray-500 hover:border-pie-green hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                     Pacientes
                   </Link>
+                  <Link href="/consultas" className="border-transparent text-gray-500 hover:border-pie-green hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                    Consultas
+                  </Link>
+                  <Link href="/citas" className="border-transparent text-gray-500 hover:border-pie-green hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                    Citas
+                  </Link>
                   <Link href="/agenda" className="border-transparent text-gray-500 hover:border-pie-green hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                     Agenda
                   </Link>
