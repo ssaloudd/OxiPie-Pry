@@ -119,7 +119,7 @@ export default function ConsultasPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
-                        <button onClick={() => setConsultaSeleccionada(con)} className="text-blue-600 hover:text-blue-900 font-bold">Ver</button>
+                        <button onClick={() => setConsultaSeleccionada(con)} className="text-gray-600 hover:text-gray-900 font-bold">Ver</button>
                         <Link href={`/consultas/${con.id_con}`} className="text-oxi-blue hover:text-oxi-dark font-semibold">Editar</Link>
                         <button onClick={() => handleDelete(con.id_con)} className="text-red-500 hover:text-red-700 font-semibold">Eliminar</button>
                       </td>

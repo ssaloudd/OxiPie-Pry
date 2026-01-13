@@ -7,6 +7,8 @@ import { Tratamiento } from '@/types';
 export default function TratamientosPage() {
   const [tratamientos, setTratamientos] = useState<Tratamiento[]>([]);
   const [loading, setLoading] = useState(true);
+  // Estado Modal
+  const [seleccionado, setSeleccionado] = useState<Tratamiento | null>(null);
 
   const fetchTratamientos = async () => {
     try {
@@ -93,6 +95,7 @@ export default function TratamientosPage() {
                           ${t.precioBase_tra.toFixed(2)}
                         </td>
                         <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-4">
+                          <button onClick={() => setSeleccionado(t)} className="text-gray-600 hover:text-gray-900 font-bold">Ver</button>
                           <Link href={`/tratamientos/${t.id_tra}`} className="text-oxi-blue hover:text-oxi-dark font-semibold">Editar</Link>
                           <button onClick={() => handleDelete(t.id_tra)} className="text-red-500 hover:text-red-700 font-semibold">Eliminar</button>
                         </td>
@@ -105,6 +108,45 @@ export default function TratamientosPage() {
           </div>
         </div>
       </div>
+
+      {/* --- MODAL DETALLE TRATAMIENTO --- */}
+      {seleccionado && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative animate-fade-in-up">
+                <button onClick={() => setSeleccionado(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                
+                <h2 className="text-xl font-bold text-oxi-dark mb-4 border-b pb-2">
+                    Detalle del Servicio
+                </h2>
+
+                <div className="space-y-4">
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase">Nombre del Tratamiento</label>
+                        <p className="text-lg font-bold text-oxi-blue">{seleccionado.nombres_tra}</p>
+                    </div>
+
+                    <div className="bg-green-50 p-4 rounded border border-green-200">
+                        <label className="text-xs font-bold text-green-700 uppercase">Precio Base Sugerido</label>
+                        <p className="text-2xl font-bold text-gray-800">${seleccionado.precioBase_tra.toFixed(2)}</p>
+                    </div>
+
+                    <div>
+                         <label className="text-xs font-bold text-gray-500 uppercase">Descripción</label>
+                         <p className="text-gray-600 text-sm">{(seleccionado as any).descripcion_tra || 'Sin descripción detallada.'}</p>
+                    </div>
+                </div>
+
+                <div className="mt-6 flex justify-end gap-2">
+                    <Link href={`/tratamientos/${seleccionado.id_tra}`} className="bg-oxi-blue text-white px-4 py-2 rounded hover:bg-oxi-dark">
+                        Editar Servicio
+                    </Link>
+                    <button onClick={() => setSeleccionado(null)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -10,6 +10,9 @@ export default function PacientesPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // Estado Modal
+  const [seleccionado, setSeleccionado] = useState<Paciente | null>(null);
+
   const fetchPacientes = async () => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_PATIENTS}/pacientes`, { cache: 'no-store' });
@@ -48,6 +51,11 @@ export default function PacientesPage() {
     }
   };
 
+  const formatDate = (iso: string) => {
+    if (!iso) return 'N/A';
+    return new Date(iso).toLocaleDateString('es-EC', { timeZone: 'UTC' });
+  };
+  
   if (loading) return <div className="text-center mt-10 text-oxi-blue font-bold">Cargando pacientes...</div>;
 
   return (
@@ -55,7 +63,7 @@ export default function PacientesPage() {
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
           <h1 className="text-2xl font-bold text-oxi-dark">Pacientes</h1>
-          <p className="mt-2 text-sm text-gray-700">Gestión completa de historias clínicas.</p>
+          <p className="mt-2 text-sm text-gray-700">Gestión completa de datos de cada paciente registrado.</p>
         </div>
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
           <Link
@@ -96,15 +104,9 @@ export default function PacientesPage() {
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-600">{paciente.telefono_pac || '-'}</td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-600 capitalize">{paciente.genero_pac}</td>
                         <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-4">
-                          <Link href={`/pacientes/${paciente.id_pac}`} className="text-oxi-blue hover:text-oxi-dark font-semibold">
-                            Editar
-                          </Link>
-                          <button 
-                            onClick={() => handleDelete(paciente.id_pac)}
-                            className="text-red-500 hover:text-red-700 font-semibold"
-                          >
-                            Eliminar
-                          </button>
+                          <button onClick={() => setSeleccionado(paciente)} className="text-gray-600 hover:text-gray-900 font-bold">Ver</button>
+                          <Link href={`/pacientes/${paciente.id_pac}`} className="text-oxi-blue hover:text-oxi-dark font-semibold">Editar</Link>
+                          <button onClick={() => handleDelete(paciente.id_pac)} className="text-red-500 hover:text-red-700 font-semibold">Eliminar</button>
                         </td>
                       </tr>
                     ))
@@ -115,6 +117,61 @@ export default function PacientesPage() {
           </div>
         </div>
       </div>
+
+      {/* --- MODAL DETALLE PACIENTE --- */}
+      {seleccionado && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 relative animate-fade-in-up">
+                <button onClick={() => setSeleccionado(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                
+                <h2 className="text-xl font-bold text-pie-dark mb-4 border-b pb-2">
+                    Historia Personal
+                </h2>
+
+                <div className="space-y-4">
+                    <div className="text-center mb-4">
+                        <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-green-100 text-green-600 text-2xl font-bold uppercase mb-2">
+                            {seleccionado.nombres_pac[0]}{seleccionado.apellidos_pac[0]}
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-800">{seleccionado.nombres_pac} {seleccionado.apellidos_pac}</h3>
+                        <p className="text-sm text-gray-500">{seleccionado.email_pac || 'Sin email'}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded border">
+                        <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase">Cédula</label>
+                            <p className="font-medium">{seleccionado.cedula_pac}</p>
+                        </div>
+                        <div>
+                             <label className="text-xs font-bold text-gray-500 uppercase">Teléfono</label>
+                             <p className="font-medium">{seleccionado.telefono_pac || 'N/A'}</p>
+                        </div>
+                        <div>
+                             <label className="text-xs font-bold text-gray-500 uppercase">Género</label>
+                             <p className="capitalize">{seleccionado.genero_pac}</p>
+                        </div>
+                        <div>
+                             <label className="text-xs font-bold text-gray-500 uppercase">Fecha Nacimiento</label>
+                             <p>{formatDate(seleccionado.fechaNac_pac)}</p>
+                        </div>
+                        <div className="col-span-2">
+                             <label className="text-xs font-bold text-gray-500 uppercase">Dirección Domiciliaria</label>
+                             <p>{seleccionado.direccion_pac || 'Sin dirección registrada'}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-6 flex justify-end gap-2">
+                    <Link href={`/pacientes/${seleccionado.id_pac}`} className="bg-pie-green text-white px-4 py-2 rounded hover:bg-pie-dark">
+                        Editar Datos
+                    </Link>
+                    <button onClick={() => setSeleccionado(null)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+      )}
     </div>
   );
 }
