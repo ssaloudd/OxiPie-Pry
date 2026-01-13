@@ -64,6 +64,7 @@ model Podologa {
 model Tratamiento {
   id_tra          Int     @id @default(autoincrement())
   nombres_tra     String
+  descripcion_tra   String?  @db.Text
   precioBase_tra  Float
 
   // Relaciones
@@ -76,7 +77,7 @@ model Tratamiento {
 model Consulta {
   id_con              Int          @id @default(autoincrement())
   id_pac              Int
-  id_pod              Int
+  id_pod              Int?
   fechaHora_con        DateTime     @db.DateTime(0)
   horaInicio_con       DateTime?    @db.Time
   horaFin_con          DateTime?    @db.Time
@@ -93,7 +94,7 @@ model Consulta {
 
   // Relaciones
   paciente            Paciente     @relation(fields: [id_pac], references: [id_pac])
-  podologa            Podologa     @relation(fields: [id_pod], references: [id_pod])
+  podologa            Podologa?     @relation(fields: [id_pod], references: [id_pod])
   tratamientoSugerido Tratamiento? @relation(fields: [id_tra_recomendado], references: [id_tra])
   
   citasOriginadas     Cita[]
@@ -105,7 +106,7 @@ model Cita {
   id_cit              Int          @id @default(autoincrement())
   id_pac              Int
   id_con_origen       Int?         // Puede venir de una consulta o ser directa
-  id_pod              Int
+  id_pod              Int?
   id_tra              Int
   fechaHora_cit        DateTime     @db.DateTime(0)
   horaInicio_cit       DateTime?    @db.Time
@@ -119,7 +120,7 @@ model Cita {
   // Relaciones
   paciente            Paciente     @relation(fields: [id_pac], references: [id_pac])
   consultaOrigen      Consulta?    @relation(fields: [id_con_origen], references: [id_con])
-  podologa            Podologa     @relation(fields: [id_pod], references: [id_pod])
+  podologa            Podologa?     @relation(fields: [id_pod], references: [id_pod])
   tratamiento         Tratamiento  @relation(fields: [id_tra], references: [id_tra])
 
   @@map("citas")

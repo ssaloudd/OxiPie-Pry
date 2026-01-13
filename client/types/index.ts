@@ -21,3 +21,10 @@ export interface Podologa {
   email_pod?: string;
   fechaNac_pod: string;
 }
+
+export interface Tratamiento {
+  id_tra: number;
+  nombres_tra: string;
+  descripcion_tra: string;
+  precioBase_tra: number;
+}
