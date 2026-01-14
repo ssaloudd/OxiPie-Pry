@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Paciente, Podologa, Tratamiento } from '@/types';
+import SearchableSelect from '@/components/SearchableSelect'; // <--- IMPORTANTE
 
 export default function NuevaConsultaPage() {
   const router = useRouter();
   
-  // Catálogos
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [podologas, setPodologas] = useState<Podologa[]>([]);
-  const [tratamientos, setTratamientos] = useState<Tratamiento[]>([]); // Nuevo catálogo
+  const [tratamientos, setTratamientos] = useState<Tratamiento[]>([]);
   
   const [formData, setFormData] = useState({
     id_pac: '',
@@ -18,14 +18,10 @@ export default function NuevaConsultaPage() {
     fecha: new Date().toISOString().split('T')[0],
     horaInicio: '09:00',
     horaFin: '09:30',
-    estado_con: 'pendiente', // Agregamos estado para poder marcar "Completada" de una vez
-    
-    // Clínico
+    estado_con: 'pendiente',
     motivoConsulta_con: '',
-    diagnostico_con: '',       // Nuevo en creación
-    id_tra_recomendado: '',    // Nuevo en creación
-    
-    // Financiero / Notas
+    diagnostico_con: '',       
+    id_tra_recomendado: '',    
     notasAdicionales_con: '',
     precioSugerido_con: '20.00',
     cantidadPagada_con: '0.00',
@@ -38,7 +34,7 @@ export default function NuevaConsultaPage() {
             const [resPac, resPod, resTra] = await Promise.all([
                 fetch(`${process.env.NEXT_PUBLIC_API_PATIENTS}/pacientes`),
                 fetch(`${process.env.NEXT_PUBLIC_API_SCHEDULING}/podologas`),
-                fetch(`${process.env.NEXT_PUBLIC_API_SCHEDULING}/tratamientos`) // Traer tratamientos
+                fetch(`${process.env.NEXT_PUBLIC_API_SCHEDULING}/tratamientos`)
             ]);
             setPacientes(await resPac.json());
             setPodologas(await resPod.json());
@@ -56,7 +52,6 @@ export default function NuevaConsultaPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
-
       if (res.ok) {
         alert('Consulta registrada exitosamente');
         router.push('/consultas'); 
@@ -74,8 +69,6 @@ export default function NuevaConsultaPage() {
 
     setFormData(prev => {
         const newState = { ...prev, [name]: val };
-        
-        // Lógica automática de pago
         if (name === 'pagado_con') {
             newState.cantidadPagada_con = val ? prev.precioSugerido_con : '0.00';
         }
@@ -83,35 +76,57 @@ export default function NuevaConsultaPage() {
     });
   };
 
+  // Wrapper para el componente SearchableSelect
+  const handleSelectChange = (field: string, val: string | number) => {
+      setFormData(prev => ({ ...prev, [field]: val }));
+  };
+
+  // PREPARAR OPCIONES PARA EL BUSCADOR
+  const opcionesPacientes = pacientes.map(p => ({
+      value: p.id_pac,
+      label: `${p.nombres_pac} ${p.apellidos_pac} - CI: ${p.cedula_pac}`
+  }));
+
+  const opcionesPodologas = podologas.map(p => ({
+      value: p.id_pod,
+      label: `${p.nombres_pod} ${p.apellidos_pod}`
+  }));
+
+  const opcionesTratamientos = tratamientos.map(t => ({
+      value: t.id_tra,
+      label: t.nombres_tra
+  }));
+
+
   return (
     <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-6 border-t-4 border-oxi-blue mt-6">
       <div className="flex justify-between border-b pb-2 mb-6">
-        <h2 className="text-2xl font-bold text-oxi-dark">Nueva Consulta Integral</h2>
+        <h2 className="text-2xl font-bold text-oxi-dark">Nueva Consulta</h2>
+        <span className="text-sm text-gray-500 italic">Registro completo</span>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         
-        {/* SECCIÓN 1: DATOS ADMINISTRATIVOS */}
+        {/* SECCIÓN 1: DATOS ADMINISTRATIVOS (CON BUSCADOR) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <label className="block text-sm font-bold text-gray-700">Paciente *</label>
-                <div className="flex gap-2">
-                    <select name="id_pac" required onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 border p-2 bg-gray-50">
-                        <option value="">Seleccione paciente...</option>
-                        {pacientes.map(p => (
-                            <option key={p.id_pac} value={p.id_pac}>{p.apellidos_pac} {p.nombres_pac}</option>
-                        ))}
-                    </select>
-                </div>
+                <SearchableSelect 
+                    label="Paciente"
+                    options={opcionesPacientes}
+                    value={formData.id_pac}
+                    onChange={(val) => handleSelectChange('id_pac', val)}
+                    placeholder="Buscar por nombre o cédula..."
+                    required
+                />
             </div>
             <div>
-                <label className="block text-sm font-bold text-gray-700">Especialista</label>
-                <select name="id_pod" onChange={handleChange} className="mt-1 block w-full border-gray-300 border p-2 rounded-md bg-gray-50">
-                    <option value="">-- Sin Asignar --</option>
-                    {podologas.map(p => (
-                        <option key={p.id_pod} value={p.id_pod}>{p.nombres_pod} {p.apellidos_pod}</option>
-                    ))}
-                </select>
+                <SearchableSelect 
+                    label="Especialista"
+                    options={opcionesPodologas}
+                    value={formData.id_pod}
+                    onChange={(val) => handleSelectChange('id_pod', val)}
+                    placeholder="Buscar especialista..."
+                />
             </div>
         </div>
 
@@ -133,7 +148,7 @@ export default function NuevaConsultaPage() {
                 </div>
                 <div>
                     <label className="block text-xs font-semibold text-gray-600">Estado</label>
-                    <select name="estado_con" value={formData.estado_con} onChange={handleChange} className="w-full border p-2 rounded-md">
+                    <select name="estado_con" value={formData.estado_con} onChange={handleChange} className="w-full border p-2 rounded-md bg-white">
                         <option value="pendiente">Pendiente</option>
                         <option value="completada">Completada</option>
                         <option value="cancelada">Cancelada</option>
@@ -142,7 +157,7 @@ export default function NuevaConsultaPage() {
             </div>
         </div>
 
-        {/* SECCIÓN 3: REGISTRO CLÍNICO (NUEVO AQUÍ) */}
+        {/* SECCIÓN 3: REGISTRO CLÍNICO */}
         <div className="bg-white p-4 rounded-md border border-gray-200 shadow-sm">
             <h3 className="text-sm font-bold text-gray-700 mb-3 uppercase border-b pb-1">Registro Clínico</h3>
             
@@ -159,17 +174,18 @@ export default function NuevaConsultaPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Tratamiento Sugerido</label>
-                        <select name="id_tra_recomendado" onChange={handleChange} className="mt-1 block w-full border-gray-300 border p-2 rounded-md">
-                            <option value="">-- Ninguno / Seleccionar --</option>
-                            {tratamientos.map(t => (
-                                <option key={t.id_tra} value={t.id_tra}>{t.nombres_tra}</option>
-                            ))}
-                        </select>
+                        {/* Usamos el buscador también para tratamientos si son muchos */}
+                        <SearchableSelect 
+                            label="Tratamiento Sugerido"
+                            options={opcionesTratamientos}
+                            value={formData.id_tra_recomendado}
+                            onChange={(val) => handleSelectChange('id_tra_recomendado', val)}
+                            placeholder="Buscar tratamiento..."
+                        />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Notas Adicionales</label>
-                        <textarea name="notasAdicionales_con" rows={1} onChange={handleChange} className="mt-1 block w-full border-gray-300 border p-2 rounded-md"></textarea>
+                        <label className="block text-sm font-bold text-gray-700 mb-1">Notas Adicionales</label>
+                        <textarea name="notasAdicionales_con" rows={1} onChange={handleChange} className="mt-0 block w-full border-gray-300 border p-2 rounded-md h-[42px]"></textarea>
                     </div>
                 </div>
             </div>
@@ -209,7 +225,7 @@ export default function NuevaConsultaPage() {
 
         <div className="pt-5 flex justify-end gap-3">
             <button type="button" onClick={() => router.back()} className="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancelar</button>
-            <button type="submit" className="rounded-md bg-oxi-blue py-2 px-4 text-sm font-medium text-white hover:bg-oxi-dark shadow-md">Guardar Consulta Completa</button>
+            <button type="submit" className="rounded-md bg-oxi-blue py-2 px-4 text-sm font-medium text-white hover:bg-oxi-dark shadow-md">Guardar Consulta</button>
         </div>
       </form>
     </div>

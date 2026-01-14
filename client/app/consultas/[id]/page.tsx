@@ -2,44 +2,36 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { Consulta, Podologa, Tratamiento } from '@/types';
+import { Consulta, Paciente, Podologa, Tratamiento } from '@/types';
+import SearchableSelect from '@/components/SearchableSelect'; // <--- Usamos el mismo componente
 
-// Helpers de fecha
 const getHora = (isoDate: string) => isoDate ? new Date(isoDate).toLocaleTimeString('es-EC', {hour: '2-digit', minute:'2-digit', hour12: false}) : '';
-const getDate = (isoDate: string) => {
-    if(!isoDate) return '';
-    const d = new Date(isoDate);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-};
+const getDate = (isoDate: string) => isoDate ? new Date(isoDate).toISOString().split('T')[0] : '';
 
-export default function DetalleConsultaPage({ params }: { params: Promise<{ id: string }> }) {
+export default function EditarConsultaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   
+  const [loading, setLoading] = useState(true);
   const [consulta, setConsulta] = useState<Consulta | null>(null);
+  
+  // Catálogos completos
+  const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [podologas, setPodologas] = useState<Podologa[]>([]);
   const [tratamientos, setTratamientos] = useState<Tratamiento[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [nombrePaciente, setNombrePaciente] = useState("Cargando...");
 
   // Form unificado
   const [formData, setFormData] = useState({
+      id_pac: '', // Ahora es editable/seleccionable si fuera necesario, aunque usualmente se bloquea al editar.
       id_pod: '',
       fecha: '',
       horaInicio: '',
       horaFin: '',
       estado_con: '',
-      
-      // Clínico
       motivoConsulta_con: '',
       diagnostico_con: '',
       id_tra_recomendado: '',
       notasAdicionales_con: '',
-      
-      // Financiero
       precioSugerido_con: 0,
       pagado_con: false,
       cantidadPagada_con: 0
@@ -48,26 +40,25 @@ export default function DetalleConsultaPage({ params }: { params: Promise<{ id: 
   useEffect(() => {
     const init = async () => {
         try {
-            const [resCon, resPod, resTra] = await Promise.all([
-                fetch(`${process.env.NEXT_PUBLIC_API_SCHEDULING}/consultas/${id}`),
+            // Cargar Catálogos
+            const [resPac, resPod, resTra, resCon] = await Promise.all([
+                fetch(`${process.env.NEXT_PUBLIC_API_PATIENTS}/pacientes`),
                 fetch(`${process.env.NEXT_PUBLIC_API_SCHEDULING}/podologas`),
-                fetch(`${process.env.NEXT_PUBLIC_API_SCHEDULING}/tratamientos`)
+                fetch(`${process.env.NEXT_PUBLIC_API_SCHEDULING}/tratamientos`),
+                fetch(`${process.env.NEXT_PUBLIC_API_SCHEDULING}/consultas/${id}`)
             ]);
 
-            if(!resCon.ok) throw new Error("Consulta no encontrada");
-            
-            const dataCon: Consulta = await resCon.json();
-            setConsulta(dataCon);
+            setPacientes(await resPac.json());
             setPodologas(await resPod.json());
             setTratamientos(await resTra.json());
 
-            // Cargar nombre paciente
-            const resPac = await fetch(`${process.env.NEXT_PUBLIC_API_PATIENTS}/pacientes/${dataCon.id_pac}`);
-            const dataPac = await resPac.json();
-            setNombrePaciente(`${dataPac.nombres_pac} ${dataPac.apellidos_pac}`);
+            if(!resCon.ok) throw new Error("Consulta no encontrada");
+            const dataCon: Consulta = await resCon.json();
+            setConsulta(dataCon);
 
             // Llenar Formulario
             setFormData({
+                id_pac: dataCon.id_pac.toString(), // Convertimos a string para el select
                 id_pod: dataCon.id_pod?.toString() || '',
                 fecha: getDate(dataCon.fechaHora_con),
                 horaInicio: getHora(dataCon.horaInicio_con),
@@ -95,7 +86,6 @@ export default function DetalleConsultaPage({ params }: { params: Promise<{ id: 
 
     setFormData(prev => {
         const newState = { ...prev, [name]: val };
-        // Lógica automática de pago (opcional, ayuda al usuario)
         if (name === 'pagado_con') {
             if (val === true && prev.cantidadPagada_con === 0) {
                  newState.cantidadPagada_con = prev.precioSugerido_con;
@@ -105,6 +95,10 @@ export default function DetalleConsultaPage({ params }: { params: Promise<{ id: 
         }
         return newState;
     });
+  };
+
+  const handleSelectChange = (field: string, val: string | number) => {
+    setFormData(prev => ({ ...prev, [field]: val }));
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -130,24 +124,41 @@ export default function DetalleConsultaPage({ params }: { params: Promise<{ id: 
     if(!consulta) return;
     const query = new URLSearchParams({
         origen: consulta.id_con.toString(),
-        paciente: consulta.id_pac.toString(),
+        paciente: formData.id_pac, // Usamos el del form por si cambió
         tratamiento: formData.id_tra_recomendado || ""
     }).toString();
     router.push(`/agenda/nueva?${query}`);
   };
 
+  // Preparar opciones para selects
+  const opcionesPacientes = pacientes.map(p => ({
+    value: p.id_pac,
+    label: `${p.nombres_pac} ${p.apellidos_pac} - CI: ${p.cedula_pac}`
+  }));
+
+  const opcionesPodologas = podologas.map(p => ({
+    value: p.id_pod,
+    label: `${p.nombres_pod} ${p.apellidos_pod}`
+  }));
+
+  const opcionesTratamientos = tratamientos.map(t => ({
+    value: t.id_tra,
+    label: t.nombres_tra
+  }));
+
+
   if(loading) return <div className="p-10 text-center">Cargando...</div>;
 
   return (
-    <div className="max-w-4xl mx-auto p-4 bg-white shadow-lg rounded-lg border-t-4 border-oxi-blue mt-6">
+    <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg border-t-4 border-oxi-blue mt-6">
         
-        {/* HEADER */}
+        {/* HEADER CON BOTÓN DE DERIVACIÓN */}
         <div className="flex justify-between items-center mb-6 border-b pb-4">
             <div>
                 <h1 className="text-2xl font-bold text-gray-800">Editar Consulta #{id}</h1>
-                <p className="text-sm text-gray-600">Paciente: <span className="font-bold text-oxi-blue">{nombrePaciente}</span></p>
+                <p className="text-sm text-gray-500">Gestión completa</p>
             </div>
-            {/* Botón Derivación */}
+            {/* Botón Derivación (HU 3) */}
             <button 
                 type="button"
                 onClick={irACitaDeTratamiento}
@@ -159,78 +170,101 @@ export default function DetalleConsultaPage({ params }: { params: Promise<{ id: 
 
         <form onSubmit={handleUpdate} className="space-y-6">
             
-            {/* 1. AGENDA */}
-            <div className="bg-gray-50 p-4 rounded border border-gray-200">
-                <h3 className="text-xs font-bold text-gray-500 uppercase mb-3">Datos de Agenda</h3>
+            {/* SECCIÓN 1: DATOS ADMINISTRATIVOS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <SearchableSelect 
+                        label="Paciente"
+                        options={opcionesPacientes}
+                        value={formData.id_pac}
+                        onChange={(val) => handleSelectChange('id_pac', val)}
+                        placeholder="Buscar paciente..."
+                        required
+                    />
+                </div>
+                <div>
+                    <SearchableSelect 
+                        label="Especialista"
+                        options={opcionesPodologas}
+                        value={formData.id_pod}
+                        onChange={(val) => handleSelectChange('id_pod', val)}
+                        placeholder="Buscar especialista..."
+                    />
+                </div>
+            </div>
+
+            {/* SECCIÓN 2: AGENDA */}
+            <div className="bg-blue-50 p-4 rounded-md border border-blue-100">
+                <h3 className="text-sm font-bold text-oxi-blue mb-3 uppercase">Datos de Agenda</h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                        <label className="block text-xs font-semibold">Fecha</label>
-                        <input type="date" name="fecha" value={formData.fecha} onChange={handleChange} className="w-full border p-2 rounded" />
+                        <label className="block text-xs font-semibold text-gray-600">Fecha</label>
+                        <input type="date" name="fecha" value={formData.fecha} onChange={handleChange} className="w-full border p-2 rounded-md" />
                     </div>
                     <div>
-                        <label className="block text-xs font-semibold">Inicio</label>
-                        <input type="time" name="horaInicio" value={formData.horaInicio} onChange={handleChange} className="w-full border p-2 rounded" />
+                        <label className="block text-xs font-semibold text-gray-600">Inicio</label>
+                        <input type="time" name="horaInicio" value={formData.horaInicio} onChange={handleChange} className="w-full border p-2 rounded-md" />
                     </div>
                     <div>
-                        <label className="block text-xs font-semibold">Fin</label>
-                        <input type="time" name="horaFin" value={formData.horaFin} onChange={handleChange} className="w-full border p-2 rounded" />
+                        <label className="block text-xs font-semibold text-gray-600">Fin</label>
+                        <input type="time" name="horaFin" value={formData.horaFin} onChange={handleChange} className="w-full border p-2 rounded-md" />
                     </div>
                     <div>
-                        <label className="block text-xs font-semibold">Especialista</label>
-                        <select name="id_pod" value={formData.id_pod} onChange={handleChange} className="w-full border p-2 rounded">
-                            <option value="">-- Sin Asignar --</option>
-                            {podologas.map(p => <option key={p.id_pod} value={p.id_pod}>{p.nombres_pod} {p.apellidos_pod}</option>)}
+                        <label className="block text-xs font-semibold text-gray-600">Estado</label>
+                        <select name="estado_con" value={formData.estado_con} onChange={handleChange} className="w-full border p-2 rounded-md bg-white">
+                            <option value="pendiente">Pendiente</option>
+                            <option value="completada">Completada</option>
+                            <option value="cancelada">Cancelada</option>
                         </select>
                     </div>
                 </div>
             </div>
 
-            {/* 2. REGISTRO CLÍNICO */}
-            <div>
-                <div className="flex justify-between items-center mb-2">
-                     <h3 className="text-sm font-bold text-gray-700 uppercase">Información Clínica</h3>
-                     <select name="estado_con" value={formData.estado_con} onChange={handleChange} className="border p-1 rounded text-sm bg-gray-50 font-medium">
-                         <option value="pendiente">Pendiente</option>
-                         <option value="completada">Completada</option>
-                         <option value="cancelada">Cancelada</option>
-                     </select>
-                </div>
+            {/* SECCIÓN 3: REGISTRO CLÍNICO */}
+            <div className="bg-white p-4 rounded-md border border-gray-200 shadow-sm">
+                <h3 className="text-sm font-bold text-gray-700 mb-3 uppercase border-b pb-1">Registro Clínico</h3>
                 
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Motivo</label>
-                        <textarea name="motivoConsulta_con" rows={2} value={formData.motivoConsulta_con} onChange={handleChange} className="w-full border p-2 rounded"></textarea>
+                        <label className="block text-sm font-medium text-gray-700">Motivo de Consulta</label>
+                        <textarea name="motivoConsulta_con" rows={2} value={formData.motivoConsulta_con} onChange={handleChange} className="mt-1 block w-full border-gray-300 border p-2 rounded-md focus:ring-oxi-blue focus:border-oxi-blue"></textarea>
                     </div>
+                    
                     <div>
-                        <label className="block text-sm font-medium text-oxi-blue">Diagnóstico</label>
-                        <textarea name="diagnostico_con" rows={3} value={formData.diagnostico_con} onChange={handleChange} className="w-full border-2 border-blue-100 p-2 rounded focus:border-oxi-blue"></textarea>
+                        <label className="block text-sm font-medium text-gray-700 text-oxi-blue">Diagnóstico</label>
+                        <textarea name="diagnostico_con" rows={3} value={formData.diagnostico_con} onChange={handleChange} className="mt-1 block w-full border-blue-200 border-2 p-2 rounded-md focus:ring-oxi-blue focus:border-oxi-blue"></textarea>
                     </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                             <label className="block text-sm font-medium text-gray-700">Tratamiento Recomendado</label>
-                             <select name="id_tra_recomendado" value={formData.id_tra_recomendado} onChange={handleChange} className="w-full border p-2 rounded bg-white">
-                                <option value="">-- Ninguno --</option>
-                                {tratamientos.map(t => <option key={t.id_tra} value={t.id_tra}>{t.nombres_tra}</option>)}
-                             </select>
+                            <SearchableSelect 
+                                label="Tratamiento Sugerido"
+                                options={opcionesTratamientos}
+                                value={formData.id_tra_recomendado}
+                                onChange={(val) => handleSelectChange('id_tra_recomendado', val)}
+                                placeholder="Buscar tratamiento..."
+                            />
                         </div>
                         <div>
-                             <label className="block text-sm font-medium text-gray-700">Notas Adicionales</label>
-                             <textarea name="notasAdicionales_con" rows={1} value={formData.notasAdicionales_con} onChange={handleChange} className="w-full border p-2 rounded"></textarea>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">Notas Adicionales</label>
+                            <textarea name="notasAdicionales_con" rows={1} value={formData.notasAdicionales_con} onChange={handleChange} className="mt-0 block w-full border-gray-300 border p-2 rounded-md h-[42px]"></textarea>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* 3. FINANZAS */}
-            <div className="bg-green-50 p-4 rounded border border-green-200">
-                <h3 className="text-xs font-bold text-green-800 uppercase mb-3">Finanzas</h3>
+            {/* SECCIÓN 4: PAGO (FINANZAS) */}
+            <div className="bg-green-50 p-4 rounded-md border border-green-200">
+                <h3 className="text-sm font-bold text-green-800 mb-3 flex items-center gap-2 uppercase">
+                    <span>Finanzas</span>
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase">Costo ($)</label>
-                        <input type="number" step="0.01" name="precioSugerido_con" value={formData.precioSugerido_con} onChange={handleChange} className="w-full border p-2 rounded bg-white" />
+                        <label className="block text-sm font-medium text-gray-700">Costo Consulta ($)</label>
+                        <input type="number" step="0.01" name="precioSugerido_con" value={formData.precioSugerido_con} onChange={handleChange} className="mt-1 block w-full border p-2 rounded-md bg-white" />
                     </div>
 
-                    <div className="flex items-center h-10">
+                    <div className="flex items-center h-12">
                         <label className="inline-flex items-center cursor-pointer">
                             <input type="checkbox" name="pagado_con" checked={formData.pagado_con} onChange={handleChange} className="sr-only peer" />
                             <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
@@ -239,18 +273,17 @@ export default function DetalleConsultaPage({ params }: { params: Promise<{ id: 
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase">Monto Recibido ($)</label>
+                        <label className="block text-sm font-medium text-gray-700">Monto Recibido ($)</label>
                         <input 
                             type="number" step="0.01" name="cantidadPagada_con" 
                             value={formData.cantidadPagada_con} onChange={handleChange} 
                             disabled={!formData.pagado_con}
-                            className={`w-full border p-2 rounded font-bold ${formData.pagado_con ? 'bg-white text-green-700 border-green-500' : 'bg-gray-100 text-gray-400'}`} 
+                            className={`mt-1 block w-full border p-2 rounded-md font-bold ${formData.pagado_con ? 'bg-white text-green-700 border-green-500' : 'bg-gray-100 text-gray-400'}`} 
                         />
                     </div>
                 </div>
             </div>
 
-            {/* BOTONES */}
             <div className="flex justify-end gap-3 pt-4">
                 <button type="button" onClick={() => router.back()} className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-50">Cancelar</button>
                 <button type="submit" className="px-4 py-2 bg-oxi-blue text-white rounded hover:bg-oxi-dark font-medium shadow">Guardar Cambios</button>

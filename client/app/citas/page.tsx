@@ -128,31 +128,37 @@ export default function CitasPage() {
                 </h2>
 
                 <div className="space-y-4">
-                     {/* Info Básica */}
+                    {/* Info Básica */}
+                    <h3 className="text-sm font-bold text-gray-700 mb-3 text-center">Información General</h3>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="text-xs font-bold text-gray-500 uppercase">Paciente</label>
-                            <p className="text-lg">{getNombrePaciente(citaSeleccionada.id_pac)}</p>
+                            <p className="font-medium">{getNombrePaciente(citaSeleccionada.id_pac)}</p>
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase">Horario</label>
-                            <p>{formatDateTime(citaSeleccionada.fechaHora_cit)}</p>
+                            <label className="text-xs font-bold text-gray-500 uppercase">Especialista</label>
+                            <p className="font-medium">{citaSeleccionada.podologa?.nombres_pod || 'N'} {citaSeleccionada.podologa?.apellidos_pod || 'A'}</p>
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase">Fecha</label>
+                            <p className="font-medium">{formatDateTime(citaSeleccionada.fechaHora_cit)}</p>
                         </div>
                     </div>
-                    
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase">Tratamiento</label>
-                        <p className="font-medium">{citaSeleccionada.tratamiento?.nombres_tra}</p>
-                    </div>
-
-                    <div className="bg-gray-50 p-3 rounded border">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Notas Adicionales</label>
-                        <p className="text-gray-600 italic">{citaSeleccionada.notasAdicionales_cit || 'Sin notas registradas.'}</p>
+       
+                    <div className="p-3 rounded border">
+                        <div className="mb-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Tratamiento</label>
+                            <p className="font-sm">{citaSeleccionada.tratamiento?.nombres_tra}</p>
+                        </div>
+                        <div className="mb-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Notas Adicionales</label>
+                            <p className="font-sm text-gray-600 italic">{citaSeleccionada.notasAdicionales_cit || 'Sin notas registradas.'}</p>
+                        </div>
                     </div>
 
                     {/* FINANZAS (Lo que pediste explícitamente) */}
                     <div className="border-t pt-4">
-                        <h3 className="text-sm font-bold text-gray-700 mb-3">Información Financiera</h3>
+                        <h3 className="text-sm font-bold text-gray-700 mb-3 text-center">Información Financiera</h3>
                         <div className="grid grid-cols-3 gap-4 bg-green-50 p-3 rounded border border-green-200">
                             <div>
                                 <label className="text-xs font-bold text-gray-500 uppercase block">Precio Acordado</label>
