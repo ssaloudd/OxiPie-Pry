@@ -63,7 +63,7 @@ PORT=4001
 ```
     3. Inicia el servidor
 ```
-npm install
+npm start
 ```
 
 ### 4. Levantar Microservicio de Agendamiento
@@ -79,7 +79,7 @@ PORT=4002
 ```
     3. Inicia el servidor
 ```
-npm install
+npm start
 ```
 
 ### 5. Levantar el Frontend (Next.js)

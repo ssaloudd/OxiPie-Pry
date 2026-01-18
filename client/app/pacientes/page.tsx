@@ -9,8 +9,9 @@ export default function PacientesPage() {
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-
-  // Estado Modal
+  
+  // Estado para búsqueda y Modal
+  const [busqueda, setBusqueda] = useState('');
   const [seleccionado, setSeleccionado] = useState<Paciente | null>(null);
 
   const fetchPacientes = async () => {
@@ -35,16 +36,19 @@ export default function PacientesPage() {
     if (!confirm('¿Estás seguro de eliminar este paciente? Esta acción no se puede deshacer.')) return;
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_PATIENTS}/pacientes/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_PATIENTS}/pacientes/${id}`, { 
         method: 'DELETE',
-      });
+       });
 
       if (res.ok || res.status === 204) {
         // Actualizamos el estado local filtrando el eliminado para no recargar página
         setPacientes(pacientes.filter(p => p.id_pac !== id));
+        if (seleccionado?.id_pac === id) setSeleccionado(null);
+        
         alert('Paciente eliminado.');
+        router.refresh(); 
       } else {
-        alert('Error al eliminar paciente.');
+        alert('Error al eliminar paciente.'); 
       }
     } catch (error) {
       alert('Error de conexión con el servidor.');
@@ -55,67 +59,85 @@ export default function PacientesPage() {
     if (!iso) return 'N/A';
     return new Date(iso).toLocaleDateString('es-EC', { timeZone: 'UTC' });
   };
-  
+
+  // --- LÓGICA DE FILTRADO ---
+  const pacientesFiltrados = pacientes.filter(p => {
+      const termino = busqueda.toLowerCase();
+      const nombreCompleto = `${p.nombres_pac} ${p.apellidos_pac}`.toLowerCase();
+      const cedula = p.cedula_pac.toLowerCase();
+      
+      return nombreCompleto.includes(termino) || cedula.includes(termino);
+  });
+
   if (loading) return <div className="text-center mt-10 text-oxi-blue font-bold">Cargando pacientes...</div>;
 
   return (
-    <div className="px-4 sm:px-0 mt-6">
-      <div className="sm:flex sm:items-center">
-        <div className="sm:flex-auto">
-          <h1 className="text-2xl font-bold text-oxi-dark">Pacientes</h1>
-          <p className="mt-2 text-sm text-gray-700">Gestión completa de datos de cada paciente registrado.</p>
+    <div className="px-4 mt-6">
+      <div className="md:flex md:items-center md:justify-between mb-6">
+        <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-bold text-oxi-dark">Directorio de Pacientes</h1>
+            <p className="text-sm text-gray-500 mt-1">Gestión de historias clínicas</p>
         </div>
-        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-          <Link
-            href="/pacientes/nuevo"
-            className="inline-flex items-center justify-center rounded-md border border-transparent bg-pie-green px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-pie-dark focus:outline-none sm:w-auto"
-          >
-            + Nuevo Paciente
-          </Link>
+        
+        <div className="mt-4 flex md:mt-0 md:ml-4 gap-3">
+             <Link href="/pacientes/nuevo" className="bg-pie-green text-white px-4 py-2 rounded shadow hover:bg-pie-dark font-medium inline-flex items-center">
+                <span>+ Nuevo Paciente</span>
+             </Link>
         </div>
       </div>
-      
-      <div className="mt-8 flex flex-col">
-        <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg border border-gray-200">
-              <table className="min-w-full divide-y divide-gray-300">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-bold text-gray-900 sm:pl-6">Nombre Completo</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-bold text-gray-900">Cédula</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-bold text-gray-900">Teléfono</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-bold text-gray-900">Género</th>
-                    <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6 text-right text-sm font-bold text-gray-900">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {pacientes.length === 0 ? (
-                     <tr>
-                        <td colSpan={5} className="text-center py-10 text-gray-500">No hay pacientes registrados aún.</td>
-                     </tr>
-                  ) : (
-                    pacientes.map((paciente) => (
-                      <tr key={paciente.id_pac} className="hover:bg-gray-50 transition-colors">
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-oxi-dark sm:pl-6">
-                          {paciente.nombres_pac} {paciente.apellidos_pac}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-600">{paciente.cedula_pac}</td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-600">{paciente.telefono_pac || '-'}</td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-600 capitalize">{paciente.genero_pac}</td>
-                        <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-4">
-                          <button onClick={() => setSeleccionado(paciente)} className="text-gray-600 hover:text-gray-900 font-bold">Ver</button>
-                          <Link href={`/pacientes/${paciente.id_pac}`} className="text-oxi-blue hover:text-oxi-dark font-semibold">Editar</Link>
-                          <button onClick={() => handleDelete(paciente.id_pac)} className="text-red-500 hover:text-red-700 font-semibold">Eliminar</button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+
+      {/* --- BARRA DE BÚSQUEDA --- */}
+      <div className="mb-4 relative max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span className="text-gray-400">🔍</span>
           </div>
-        </div>
+          <input 
+              type="text" 
+              placeholder="Buscar por nombre, apellido o cédula..." 
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-oxi-blue focus:border-oxi-blue sm:text-sm"
+          />
+      </div>
+      
+      <div className="bg-white shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cédula</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Teléfono</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Género</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {pacientesFiltrados.length === 0 ? (
+                  <tr>
+                      <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
+                          {busqueda ? `No se encontraron resultados para "${busqueda}"` : 'No hay pacientes registrados.'}
+                      </td>
+                  </tr>
+              ) : (
+                pacientesFiltrados.map((pac) => (
+                    <tr key={pac.id_pac} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {pac.nombres_pac} {pac.apellidos_pac}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{pac.cedula_pac}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{pac.telefono_pac || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{pac.genero_pac}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
+                        {/* Botón Ver abre el modal */}
+                        <button onClick={() => setSeleccionado(pac)} className="text-blue-600 hover:text-blue-900 font-bold">Ver</button>
+                        <Link href={`/pacientes/${pac.id_pac}`} className="text-indigo-600 hover:text-indigo-900">Editar</Link>
+                        <button onClick={() => handleDelete(pac.id_pac)} className="text-red-600 hover:text-red-900">Eliminar</button>
+                    </td>
+                    </tr>
+                ))
+              )}
+            </tbody>
+          </table>
       </div>
 
       {/* --- MODAL DETALLE PACIENTE --- */}
