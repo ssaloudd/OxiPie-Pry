@@ -68,14 +68,24 @@ const verificarDisponibilidad = async (id_pod, inicio, fin, excluirConsultaId = 
     return true; // Disponible
 };
 
-const buscarTodas = async (fechaFiltro) => {
+const buscarTodas = async (fecha, mes, id_pac, id_pod) => {
   const where = {};
-  if (fechaFiltro) {
-    const [anio, mes, dia] = fechaFiltro.split('-').map(Number);
-    const inicio = new Date(anio, mes - 1, dia, 0, 0, 0);
-    const fin = new Date(anio, mes - 1, dia, 23, 59, 59);
+
+  if (fecha) {
+    const [anio, m, dia] = fecha.split('-').map(Number);
+    const inicio = new Date(anio, m - 1, dia, 0, 0, 0);
+    const fin = new Date(anio, m - 1, dia, 23, 59, 59);
     where.fechaHora_con = { gte: inicio, lte: fin };
+  } 
+  else if (mes) {
+     const [anio, m] = mes.split('-').map(Number);
+     const inicio = new Date(anio, m - 1, 1, 0, 0, 0);
+     const fin = new Date(anio, m, 0, 23, 59, 59);
+     where.fechaHora_con = { gte: inicio, lte: fin };
   }
+
+  if (id_pac) where.id_pac = parseInt(id_pac);
+  if (id_pod) where.id_pod = parseInt(id_pod);
 
   return await prisma.consulta.findMany({
     where,

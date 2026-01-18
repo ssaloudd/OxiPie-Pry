@@ -2,7 +2,8 @@ const ConsultaService = require('../services/consulta.service');
 
 const obtenerTodas = async (req, res) => {
     try {
-        const consultas = await ConsultaService.buscarTodas(req.query.fecha);
+        const { fecha, mes, id_pac, id_pod } = req.query;
+        const consultas = await ConsultaService.buscarTodas(fecha, mes, id_pac, id_pod);
         res.json(consultas);
     } catch (error) {
         res.status(500).json({ error: error.message });
