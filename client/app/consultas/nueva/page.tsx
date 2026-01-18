@@ -89,7 +89,7 @@ export default function NuevaConsultaPage() {
 
   const opcionesPodologas = podologas.map(p => ({
       value: p.id_pod,
-      label: `${p.nombres_pod} ${p.apellidos_pod}`
+      label: `${p.nombres_pod} ${p.apellidos_pod} - CI: ${p.cedula_pod}`
   }));
 
   const opcionesTratamientos = tratamientos.map(t => ({

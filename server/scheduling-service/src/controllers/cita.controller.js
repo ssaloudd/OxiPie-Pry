@@ -2,8 +2,8 @@ const CitaService = require('../services/cita.service');
 
 const obtenerTodas = async (req, res) => {
     try {
-        // Permitir filtrar por fecha query param ?fecha=2026-01-20
-        const citas = await CitaService.buscarTodas(req.query.fecha);
+        const { fecha, mes, id_pac, id_pod } = req.query;
+        const citas = await CitaService.buscarTodas(fecha, mes, id_pac, id_pod);
         res.json(citas);
     } catch (error) {
         res.status(500).json({ error: error.message });

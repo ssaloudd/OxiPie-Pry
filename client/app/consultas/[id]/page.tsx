@@ -138,7 +138,7 @@ export default function EditarConsultaPage({ params }: { params: Promise<{ id: s
 
   const opcionesPodologas = podologas.map(p => ({
     value: p.id_pod,
-    label: `${p.nombres_pod} ${p.apellidos_pod}`
+    label: `${p.nombres_pod} ${p.apellidos_pod}  - CI: ${p.cedula_pod}`
   }));
 
   const opcionesTratamientos = tratamientos.map(t => ({
