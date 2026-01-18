@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Consulta, Paciente } from '@/types';
+import Pagination from '@/components/Pagination';
 
 export default function ConsultasPage() {
   const router = useRouter();
@@ -11,8 +12,10 @@ export default function ConsultasPage() {
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Estado para el Modal
+  // Estado para el Modal y Paginación
   const [consultaSeleccionada, setConsultaSeleccionada] = useState<Consulta | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchData();
@@ -38,6 +41,11 @@ export default function ConsultasPage() {
         }
       } catch (error) { console.error(error); } finally { setLoading(false); }
   };
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = consultas.slice(indexOfFirstItem, indexOfLastItem);
+  const paginate = (n: number) => setCurrentPage(n);
 
   const getNombrePaciente = (id: number) => {
     const p = pacientes.find(pac => pac.id_pac === id);
@@ -108,7 +116,7 @@ export default function ConsultasPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {consultas.map((con) => (
+                  {currentItems.map((con) => (
                     <tr key={con.id_con} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDateTime(con.fechaHora_con)}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">{getNombrePaciente(con.id_pac)}</td>
@@ -127,6 +135,13 @@ export default function ConsultasPage() {
                   ))}
                 </tbody>
               </table>
+              
+              <Pagination 
+                itemsPerPage={itemsPerPage} 
+                totalItems={consultas.length} 
+                paginate={paginate} 
+                currentPage={currentPage}
+              />
             </div>
           </div>
         </div>
@@ -137,54 +152,27 @@ export default function ConsultasPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 relative animate-fade-in-up overflow-y-auto max-h-[90vh]">
                 <button onClick={() => setConsultaSeleccionada(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
-                
                 <h2 className="text-xl font-bold text-oxi-blue mb-4 border-b pb-2 flex justify-between">
                     <span>Detalle de Consulta #{consultaSeleccionada.id_con}</span>
                     <span className={`text-sm px-2 py-1 rounded-full ${getStatusColor(consultaSeleccionada.estado_con)}`}>
                         {consultaSeleccionada.estado_con}
                     </span>
                 </h2>
-
                 <div className="space-y-4">
-                    {/* Info Básica */}
                     <h3 className="text-sm font-bold text-gray-700 mb-3 text-center">Información General</h3>
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase">Paciente</label>
-                            <p className="font-medium">{getNombrePaciente(consultaSeleccionada.id_pac)}</p>
-                        </div>
-                        <div>
-                          <label className="text-xs font-bold text-gray-500 uppercase">Especialista</label>
-                          <p className="font-medium">{consultaSeleccionada.podologa?.nombres_pod || 'N'} {consultaSeleccionada.podologa?.apellidos_pod || 'A'}</p>
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase">Fecha</label>
-                            <p className="font-medium">{formatDateTime(consultaSeleccionada.fechaHora_con)}</p>
-                        </div>
+                        <div><label className="text-xs font-bold text-gray-500 uppercase">Paciente</label><p className="font-medium">{getNombrePaciente(consultaSeleccionada.id_pac)}</p></div>
+                        <div><label className="text-xs font-bold text-gray-500 uppercase">Especialista</label><p className="font-medium">{consultaSeleccionada.podologa?.nombres_pod || 'N'} {consultaSeleccionada.podologa?.apellidos_pod || 'A'}</p></div>
+                        <div><label className="text-xs font-bold text-gray-500 uppercase">Fecha</label><p className="font-medium">{formatDateTime(consultaSeleccionada.fechaHora_con)}</p></div>
                     </div>
-
-                    {/* Diagnóstico */}
                     <div className="bg-blue-50 p-3 rounded border border-blue-100">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Motivo de Consulta</label>
-                        <p className="font-medium mb-2">{consultaSeleccionada.motivoConsulta_con}</p>
-                        
-                        <label className="text-xs font-bold text-gray-500 uppercase text-oxi-blue">Diagnóstico</label>
-                        <p className="font-medium mb-2">{consultaSeleccionada.diagnostico_con || 'Sin diagnóstico registrado'}</p>
+                        <label className="text-xs font-bold text-gray-500 uppercase">Motivo de Consulta</label><p className="font-medium mb-2">{consultaSeleccionada.motivoConsulta_con}</p>
+                        <label className="text-xs font-bold text-gray-500 uppercase text-oxi-blue">Diagnóstico</label><p className="font-medium mb-2">{consultaSeleccionada.diagnostico_con || 'Sin diagnóstico registrado'}</p>
                     </div>
-
-                    {/* Tratamiento y Notas */}
                     <div className="p-3 rounded border">
-                        <div className="mb-2">
-                             <label className="text-xs font-bold text-gray-500 uppercase">Tratamiento Recomendado</label>
-                             <p className="font-sm">{consultaSeleccionada.tratamientoSugerido?.nombres_tra || 'Ninguno'}</p>
-                        </div>
-                        <div className="mb-2">
-                             <label className="text-xs font-bold text-gray-500 uppercase">Notas Adicionales</label>
-                             <p className="font-sm text-gray-600 italic">{consultaSeleccionada.notasAdicionales_con || 'N/A'}</p>
-                        </div>
+                        <div className="mb-2"><label className="text-xs font-bold text-gray-500 uppercase">Tratamiento Recomendado</label><p className="font-sm">{consultaSeleccionada.tratamientoSugerido?.nombres_tra || 'Ninguno'}</p></div>
+                        <div className="mb-2"><label className="text-xs font-bold text-gray-500 uppercase">Notas Adicionales</label><p className="font-sm text-gray-600 italic">{consultaSeleccionada.notasAdicionales_con || 'N/A'}</p></div>
                     </div>
-
-                    {/* Finanzas */}
                     <div className="border-t pt-4">
                       <h3 className="text-sm font-bold text-gray-700 mb-3 text-center">Información Financiera</h3>
                       <div className="bg-green-50 p-3 rounded border border-green-200 flex justify-between items-center">
@@ -201,14 +189,9 @@ export default function ConsultasPage() {
                     </div>
                     </div>
                 </div>
-
                 <div className="mt-6 flex justify-end gap-2">
-                    <button onClick={() => router.push(`/consultas/${consultaSeleccionada.id_con}`)} className="bg-oxi-blue text-white px-4 py-2 rounded hover:bg-oxi-dark">
-                        Editar Información
-                    </button>
-                    <button onClick={() => setConsultaSeleccionada(null)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
-                        Cerrar
-                    </button>
+                    <button onClick={() => router.push(`/consultas/${consultaSeleccionada.id_con}`)} className="bg-oxi-blue text-white px-4 py-2 rounded hover:bg-oxi-dark">Editar Información</button>
+                    <button onClick={() => setConsultaSeleccionada(null)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">Cerrar</button>
                 </div>
             </div>
         </div>
