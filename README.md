@@ -111,7 +111,29 @@ NEXT_PUBLIC_API_FINANCE="http://127.0.0.1:4003/api"
 ```
 npm run dev
 ```
+### 6. Levantar Microservicio de ingresos y egresos
+Abre una quinta terminal en la raíz del proyecto:
 
+    1. Entra al servicio:
+```
+cd server/finance-service
+npm install
+```
+    2. Entra al servicio:
+```
+npm install recharts
+```
+
+    3. Crea un archivo .env en server/finance-service/ con:
+```
+PORT=4003
+DATABASE_URL="mysql://root:12345@localhost:3306/oxipie_db"
+```
+
+    4. Inicia el servidor
+```
+npm start
+```
 
 ## Uso del Sistema
 Una vez que ambos servidores (Backend y Frontend) estén encendidos, puedes acceder a:
