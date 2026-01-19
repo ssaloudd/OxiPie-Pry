@@ -29,27 +29,47 @@ export default function RootLayout({
                   <span className="text-2xl font-bold text-pie-green">Pie</span>
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                  
+                  {/* 1. Dashboard (Gráficos de Ingresos) */}
                   <Link href="/dashboard" className="border-transparent text-gray-500 hover:border-pie-green hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                     Dashboard
                   </Link>
+
+                  {/* 2. Personal (Podólogas) */}
                   <Link href="/podologas" className="border-transparent text-gray-500 hover:border-pie-green hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                     Personal
                   </Link>
+
+                  {/* 3. Servicios (Tratamientos) */}
                   <Link href="/tratamientos" className="border-transparent text-gray-500 hover:border-pie-green hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                     Servicios
                   </Link>
+
+                  {/* 4. Pacientes */}
                   <Link href="/pacientes" className="border-transparent text-gray-500 hover:border-pie-green hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                     Pacientes
                   </Link>
+
+                  {/* 5. Consultas (Historial) */}
                   <Link href="/consultas" className="border-transparent text-gray-500 hover:border-pie-green hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                     Consultas
                   </Link>
+
+                  {/* 6. Citas (Lista) */}
                   <Link href="/citas" className="border-transparent text-gray-500 hover:border-pie-green hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                     Citas
                   </Link>
+
+                  {/* 7. Agenda (Visualizador) */}
                   <Link href="/agenda" className="border-transparent text-gray-500 hover:border-pie-green hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                     Agenda
                   </Link>
+
+                  {/* 8. Finanzas (Egresos y Gastos) - NUEVO AGREGADO */}
+                  <Link href="/finanzas" className="border-transparent text-gray-500 hover:border-pie-green hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                    Finanzas
+                  </Link>
+
                 </div>
               </div>
             </div>

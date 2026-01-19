@@ -8,7 +8,7 @@ const combinarFechaHora = (fechaStr, horaStr) => {
     return new Date(anio, mes - 1, dia, horas, minutos);
 };
 
-// --- FUNCIÓN DE VALIDACIÓN CRUZADA EN MEMORIA (CORREGIDA) ---
+// --- FUNCIÓN DE VALIDACIÓN CRUZADA EN MEMORIA ---
 const verificarDisponibilidad = async (id_pod, inicio, fin, excluirCitaId = null) => {
     if (!id_pod) return true;
 
@@ -61,39 +61,15 @@ const verificarDisponibilidad = async (id_pod, inicio, fin, excluirCitaId = null
     return true;
 };
 
-const buscarTodas = async (fecha, mes, id_pac, id_pod) => {
+const buscarTodas = async (fechaFiltro) => {
   const where = {};
-
-  // Filtro 1: Fecha Exacta (Prioridad alta)
-  if (fecha) {
-    const [anio, m, dia] = fecha.split('-').map(Number);
-    const inicio = new Date(anio, m - 1, dia, 0, 0, 0);
-    const fin = new Date(anio, m - 1, dia, 23, 59, 59);
+  // Si envían fecha completa YYYY-MM-DD
+  if (fechaFiltro && fechaFiltro.length === 10) {
+    const [anio, mes, dia] = fechaFiltro.split('-').map(Number);
+    const inicio = new Date(anio, mes - 1, dia, 0, 0, 0);
+    const fin = new Date(anio, mes - 1, dia, 23, 59, 59);
     where.fechaHora_cit = { gte: inicio, lte: fin };
-  } 
-  // Filtro 2: Mes Completo (Para llenar el calendario con círculos)
-  else if (mes) {
-     // mes viene como "2026-01"
-     const [anio, m] = mes.split('-').map(Number);
-     // Primer día del mes
-     const inicio = new Date(anio, m - 1, 1, 0, 0, 0);
-     // Último día del mes (truco: día 0 del siguiente mes)
-     const fin = new Date(anio, m, 0, 23, 59, 59);
-     where.fechaHora_cit = { gte: inicio, lte: fin };
   }
-
-  // Filtro 3: Paciente
-  if (id_pac) {
-      where.id_pac = parseInt(id_pac);
-  }
-
-  // Filtro 4: Podóloga
-  if (id_pod) {
-      where.id_pod = parseInt(id_pod);
-  }
-
-  // Excluir canceladas si se desea, o dejarlas para historial. 
-  // Dejémoslas para que se vean pero tachadas (eso se maneja en front).
 
   return await prisma.cita.findMany({
     where,
@@ -125,12 +101,19 @@ const registrar = async (datos) => {
     id_pac: parseInt(datos.id_pac),
     id_tra: parseInt(datos.id_tra),
     id_con_origen: datos.id_con_origen ? parseInt(datos.id_con_origen) : null,
+    
     fechaHora_cit: fechaInicio,
     horaInicio_cit: fechaInicio, 
     horaFin_cit: fechaFin,       
+    
     precioAcordado_cit: parseFloat(datos.precioAcordado_cit),
     notasAdicionales_cit: datos.notasAdicionales_cit || "",
-    estado_cit: 'pendiente'
+    
+    // --- AQUÍ ESTABAN FALTANDO LOS CAMPOS DE PAGO ---
+    estado_cit: datos.estado_cit || 'pendiente', // Usar el estado que envía el front
+    pagado_cit: datos.pagado_cit === true || datos.pagado_cit === 'true', // Asegurar boolean
+    cantidadPagada_cit: datos.cantidadPagada_cit ? parseFloat(datos.cantidadPagada_cit) : 0
+    // -----------------------------------------------
   };
 
   if (datos.id_pod && datos.id_pod !== "") {
@@ -159,7 +142,10 @@ const actualizar = async (id, datos) => {
     const dataToUpdate = {
         notasAdicionales_cit: datos.notasAdicionales_cit,
         precioAcordado_cit: datos.precioAcordado_cit ? parseFloat(datos.precioAcordado_cit) : undefined,
-        estado_cit: datos.estado_cit
+        estado_cit: datos.estado_cit,
+        // Agregar campos de pago en actualización también
+        pagado_cit: datos.pagado_cit !== undefined ? (datos.pagado_cit === true || datos.pagado_cit === 'true') : undefined,
+        cantidadPagada_cit: datos.cantidadPagada_cit ? parseFloat(datos.cantidadPagada_cit) : undefined
     };
 
     if (fi && ff) {
