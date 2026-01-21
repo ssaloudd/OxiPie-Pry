@@ -90,28 +90,7 @@ PORT=4002
 ```
 npm start
 ```
-
-### 5. Levantar el Frontend (Next.js)
-Se abre una cuarta terminal en la raíz del proyecto:
-
-    1. Entra al clienta
-```
-cd client
-npm install
-```
-
-    2. Crea un archivo .env.local en client/ para conectar con los servicios. En caso de tener problemas, reemplace `127.0.0.1` por `localhost`:
-```
-NEXT_PUBLIC_API_PATIENTS="http://127.0.0.1:4001/api"
-NEXT_PUBLIC_API_SCHEDULING="http://127.0.0.1:4002/api"
-NEXT_PUBLIC_API_FINANCE="http://127.0.0.1:4003/api"
-```
-
-    3. Inicia el servidor de desarrollo:
-```
-npm run dev
-```
-### 6. Levantar Microservicio de ingresos y egresos
+### 5. Levantar Microservicio de ingresos y egresos
 Abre una quinta terminal en la raíz del proyecto:
 
     1. Entra al servicio:
@@ -134,20 +113,6 @@ DATABASE_URL="mysql://root:12345@localhost:3306/oxipie_db"
 ```
 npm start
 ```
-
-## Uso del Sistema
-Una vez que ambos servidores (Backend y Frontend) estén encendidos, puedes acceder a:
-
-- Dashboard Principal: http://localhost:3000/dashboard
-
-- Gestión de Pacientes: http://localhost:3000/pacientes
-
-- Gestión de Podólogas: http://localhost:3000/podologas
-
-- Gestión de Tratamientos: http://localhost:3000/tratamientos
-
-- Endpoints de la API (Pacientes): http://localhost:4001/api/pacientes
-
 ### 6. Levantar Microservicio de Notificaciones (WhatsApp)
 Abre una sexta terminal en la raíz del proyecto:
 
@@ -168,4 +133,40 @@ DATABASE_URL="mysql://root:12345@localhost:3306/oxipie_db"
 npm start
 ```
 
+### 7. Levantar el Frontend (Next.js)
+Se abre una cuarta terminal en la raíz del proyecto:
+
+    1. Entra al clienta
+```
+cd client
+npm install
+```
+
+    2. Crea un archivo .env.local en client/ para conectar con los servicios. En caso de tener problemas, reemplace `127.0.0.1` por `localhost`:
+```
+NEXT_PUBLIC_API_PATIENTS="http://127.0.0.1:4001/api"
+NEXT_PUBLIC_API_SCHEDULING="http://127.0.0.1:4002/api"
+NEXT_PUBLIC_API_FINANCE="http://127.0.0.1:4003/api"
+NEXT_PUBLIC_API_NOTIFICATIONS="http://127.0.0.1:4004/api/notificaciones"
+```
+
+    3. Inicia el servidor de desarrollo:
+```
+npm run dev
+```
+
 **Importante:** Al iniciar, aparecerá un código QR en la terminal. Debes escanearlo con WhatsApp (Dispositivos Vinculados) para activar el bot. También puedes ver el QR desde el Frontend una vez encendido.
+
+## Uso del Sistema
+Una vez que ambos servidores (Backend y Frontend) estén encendidos, puedes acceder a:
+
+- Dashboard Principal: http://localhost:3000/dashboard
+
+- Gestión de Pacientes: http://localhost:3000/pacientes
+
+- Gestión de Podólogas: http://localhost:3000/podologas
+
+- Gestión de Tratamientos: http://localhost:3000/tratamientos
+
+- Endpoints de la API (Pacientes): http://localhost:4001/api/pacientes
+
